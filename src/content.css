@@ -1,0 +1,13 @@
+/* Focus Reader injected styles.
+   The wrapper keeps inline flow so layout is untouched; only the leading
+   portion of each word gets heavier weight, with the tail slightly dimmed
+   for extra contrast. */
+
+.fr-word-wrap {
+  /* purely a transparent grouping element */
+}
+
+b.adhd-bold {
+  font-weight: 700;
+  /* inherit everything else so we never change color, size, or font */
+}

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Focus Reader</title>
+    <link rel="stylesheet" href="reader.css" />
+  </head>
+  <body>
+    <header class="rd-toolbar">
+      <div class="rd-brand">
+        <div class="rd-logo">FR</div>
+        <div>
+          <div class="rd-title">Focus Reader</div>
+          <div class="rd-file" id="fileName">No document open</div>
+        </div>
+      </div>
+
+      <div class="rd-controls">
+        <label class="rd-intensity">
+          Intensity
+          <input
+            type="range"
+            id="intensity"
+            min="0.3"
+            max="0.7"
+            step="0.05"
+            value="0.5"
+          />
+          <span id="intensityValue">50%</span>
+        </label>
+        <button class="rd-btn" id="openBtn">Open file</button>
+        <input
+          type="file"
+          id="fileInput"
+          accept=".pdf,.txt,.md,.markdown,.text,application/pdf,text/plain"
+          hidden
+        />
+      </div>
+    </header>
+
+    <main class="rd-main" id="main">
+      <!-- Empty state / dropzone -->
+      <section class="rd-empty" id="empty">
+        <div class="rd-empty-card" id="dropzone">
+          <div class="rd-empty-icon">&#128218;</div>
+          <h2>Open a document to start reading</h2>
+          <p>Drag &amp; drop a PDF or text file here, or click below.</p>
+          <button class="rd-btn rd-btn-primary" id="chooseBtn">
+            Choose a file
+          </button>
+          <p class="rd-empty-sub">PDF, TXT, MD &middot; processed locally on your device</p>
+        </div>
+      </section>
+
+      <!-- Loading -->
+      <section class="rd-loading" id="loading" hidden>
+        <div class="rd-spinner"></div>
+        <p id="loadingText">Reading document...</p>
+      </section>
+
+      <!-- Rendered document -->
+      <article class="rd-doc" id="doc" hidden></article>
+
+      <!-- Error -->
+      <section class="rd-error" id="error" hidden>
+        <p id="errorText"></p>
+      </section>
+    </main>
+
+    <script src="src/bionic.js"></script>
+    <script src="src/filestore.js"></script>
+    <script src="vendor/pdf.js"></script>
+    <script src="reader.js"></script>
+  </body>
+</html>

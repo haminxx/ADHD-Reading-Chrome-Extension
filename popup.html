@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Focus Reader</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <div class="fr-popover" id="popover">
+      <header class="fr-header">
+        <div class="fr-logo">FR</div>
+        <div class="fr-head-text">
+          <h1 class="fr-title">Focus Reader</h1>
+          <p class="fr-subtitle">Bionic reading for ADHD focus</p>
+        </div>
+        <span class="fr-status-dot" id="statusDot" title="status"></span>
+      </header>
+
+      <!-- Primary action -->
+      <button class="fr-primary" id="startBtn">
+        <span class="fr-primary-icon" id="primaryIcon">&#9654;</span>
+        <span id="primaryLabel">Start Reading</span>
+      </button>
+      <p class="fr-site-note" id="siteNote">on this page</p>
+
+      <!-- Intensity -->
+      <section class="fr-card">
+        <div class="fr-card-head">
+          <span class="fr-row-label">Bold intensity</span>
+          <span class="fr-badge" id="intensityValue">50%</span>
+        </div>
+        <input
+          type="range"
+          id="intensity"
+          min="0.3"
+          max="0.7"
+          step="0.05"
+          value="0.5"
+          class="fr-range"
+        />
+        <div class="fr-range-labels">
+          <span>Light</span>
+          <span>Heavy</span>
+        </div>
+        <p class="fr-preview" id="preview"></p>
+      </section>
+
+      <!-- File import -->
+      <section class="fr-card">
+        <div class="fr-card-head">
+          <span class="fr-row-label">Read a document</span>
+        </div>
+        <p class="fr-row-help">
+          Open a PDF or text file in a focus-formatted reader tab.
+        </p>
+
+        <label class="fr-dropzone" id="dropzone" for="fileInput">
+          <span class="fr-dropzone-icon">&#128462;</span>
+          <span class="fr-dropzone-text" id="dropzoneText">
+            Click to choose a file
+          </span>
+          <span class="fr-dropzone-sub">PDF, TXT, MD &middot; or drag &amp; drop</span>
+          <input
+            type="file"
+            id="fileInput"
+            accept=".pdf,.txt,.md,.markdown,.text,application/pdf,text/plain"
+            hidden
+          />
+        </label>
+
+        <button class="fr-secondary" id="openReaderBtn" disabled>
+          Open in Reader
+        </button>
+        <button class="fr-link" id="openBlankReaderBtn">
+          Open empty reader &rarr;
+        </button>
+      </section>
+
+      <footer class="fr-footer">
+        Reload a tab if on-page changes don't appear right away.
+      </footer>
+    </div>
+
+    <script src="src/bionic.js"></script>
+    <script src="src/filestore.js"></script>
+    <script src="popup.js"></script>
+  </body>
+</html>

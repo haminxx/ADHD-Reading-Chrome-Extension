@@ -1,0 +1,13 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log
+
+# Node (only used for tooling, not shipped)
+node_modules/
+package-lock.json
+
+# Build artifacts / zips
+*.zip
+dist/
