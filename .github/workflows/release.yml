@@ -23,11 +23,9 @@ jobs:
         run: |
           set -e
           NAME="focus-reader-${GITHUB_REF_NAME}"
-          mkdir -p build/focus-reader dist
-          # Copy only the files that make up the unpacked extension.
-          cp -r manifest.json popup.html popup.css popup.js \
-                reader.html reader.css reader.js \
-                README.md src vendor icons build/focus-reader/
+          mkdir -p build dist
+          # The extension lives in extension/; ship its contents as focus-reader.
+          cp -r extension build/focus-reader
           cd build
           zip -r "../dist/${NAME}.zip" focus-reader
           cd ..
