@@ -82,6 +82,16 @@
   }
 
   function renderBlocks() {
+    var hasText = blocks.some(function (b) {
+      return b.type === "para" && b.text && b.text.trim();
+    });
+    if (!hasText) {
+      setError(
+        "No selectable text was found in this document. Scanned or image-only " +
+          "PDFs have no embedded text to format."
+      );
+      return;
+    }
     el.doc.textContent = "";
     var frag = document.createDocumentFragment();
     for (var i = 0; i < blocks.length; i++) {

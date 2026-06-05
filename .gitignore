@@ -11,3 +11,4 @@ package-lock.json
 # Build artifacts / zips
 *.zip
 dist/
+build/

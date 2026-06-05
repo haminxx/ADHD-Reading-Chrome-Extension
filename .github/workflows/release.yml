@@ -1,0 +1,57 @@
+name: Release
+
+# Publishes a downloadable, ready-to-load extension zip whenever a version tag
+# (e.g. v1.1.0) is pushed. GitHub-hosted runners include the gh CLI and a
+# built-in token, so no secrets need to be configured.
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build extension zip
+        run: |
+          set -e
+          NAME="focus-reader-${GITHUB_REF_NAME}"
+          mkdir -p build/focus-reader dist
+          # Copy only the files that make up the unpacked extension.
+          cp -r manifest.json popup.html popup.css popup.js \
+                reader.html reader.css reader.js \
+                README.md src vendor icons build/focus-reader/
+          cd build
+          zip -r "../dist/${NAME}.zip" focus-reader
+          cd ..
+          echo "Built dist/${NAME}.zip"
+          ls -la dist
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            "dist/focus-reader-${GITHUB_REF_NAME}.zip" \
+            --title "Focus Reader ${GITHUB_REF_NAME}" \
+            --notes "$(cat <<'EOF'
+          ## Focus Reader - ADHD Bionic Reading
+
+          Download **focus-reader-${{ github.ref_name }}.zip**, unzip it, then in
+          Chrome go to \`chrome://extensions\`, enable **Developer mode**, click
+          **Load unpacked**, and select the unzipped \`focus-reader\` folder.
+
+          ### Highlights
+          - Bolds the leading half of every word to anchor attention.
+          - Toolbar popover: Start/Stop reading on the current page + intensity slider.
+          - Import a PDF / TXT / MD file and read it bionic-formatted in a new tab.
+          - 100% local, no network, minimal permissions.
+          EOF
+          )"
