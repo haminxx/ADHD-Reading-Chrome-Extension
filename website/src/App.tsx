@@ -3,6 +3,7 @@ import { LiquidHeader } from "./components/LiquidHeader";
 import { Footer } from "./components/Footer";
 import { FileTree, type FileNode } from "./components/FileTree";
 import { DocViewer } from "./components/DocViewer";
+import { HeroHeadline } from "./components/HeroHeadline";
 import { CursorFollowPauseProvider } from "./context/CursorFollowPause";
 import { DISPLACEMENT_MAP } from "./lib/liquidGlass";
 
@@ -108,7 +109,13 @@ export default function App() {
 
         <LiquidHeader />
 
-        <main className="pt-[100vh]">
+        <main>
+          <section
+            id="home"
+            className="flex min-h-screen scroll-mt-24 items-center justify-center px-6"
+          >
+            <HeroHeadline />
+          </section>
           <Sandbox />
         </main>
 
