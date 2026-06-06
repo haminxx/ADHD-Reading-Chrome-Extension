@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "pack-extension": "node scripts/pack-extension.mjs",
+    "build": "npm run pack-extension && tsc -b && vite build",
     "preview": "vite preview",
     "deploy": "npm run build && firebase deploy --only hosting",
     "firebase": "firebase"

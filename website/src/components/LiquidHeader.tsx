@@ -7,7 +7,7 @@ import {
   type Transition,
 } from "framer-motion";
 import { useCursorFollowPause, usePauseZoneHandlers } from "@/context/CursorFollowPause";
-import { NAV_ITEMS } from "@/lib/config";
+import { NAV_ITEMS, downloadExtension, openGitHub } from "@/lib/config";
 
 // "bar"    = full header (left nav pill + right actions pill) pinned at top
 // "island" = left pill collapsed into a black pill that springs to the cursor
@@ -130,13 +130,17 @@ export function LiquidHeader() {
           >
             <div className="liquid-surface flex items-center gap-1 rounded-full p-1.5">
               <motion.button
+                type="button"
                 whileTap={{ scale: 0.94 }}
+                onClick={openGitHub}
                 className="rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-foreground/80 transition-colors hover:text-foreground"
               >
                 GitHub
               </motion.button>
               <motion.button
+                type="button"
                 whileTap={{ scale: 0.94 }}
+                onClick={downloadExtension}
                 className="rounded-full bg-foreground px-5 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-background"
               >
                 Download
@@ -288,13 +292,17 @@ export function LiquidHeader() {
 
                 <div className="mt-5 grid grid-cols-2 gap-2">
                   <motion.button
+                    type="button"
                     whileTap={{ scale: 0.95 }}
+                    onClick={openGitHub}
                     className="rounded-full border border-white/25 px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-white"
                   >
                     GitHub
                   </motion.button>
                   <motion.button
+                    type="button"
                     whileTap={{ scale: 0.95 }}
+                    onClick={downloadExtension}
                     className="rounded-full bg-white px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-black"
                   >
                     Download

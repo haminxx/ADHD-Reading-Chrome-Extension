@@ -1,5 +1,7 @@
 node_modules
 dist
+public/focus-reader-extension.zip
+.pack-stage
 dist-ssr
 *.local
 .DS_Store
