@@ -23,13 +23,21 @@
     dropzoneText: document.getElementById("dropzoneText"),
     fileInput: document.getElementById("fileInput"),
     openReaderBtn: document.getElementById("openReaderBtn"),
-    openBlankReaderBtn: document.getElementById("openBlankReaderBtn")
+    openBlankReaderBtn: document.getElementById("openBlankReaderBtn"),
+    gazeToggle: document.getElementById("gazeToggle"),
+    gazeRecalBtn: document.getElementById("gazeRecalBtn"),
+    gazeNote: document.getElementById("gazeNote")
   };
 
   var PREVIEW_TEXT =
     "Bionic reading helps people focus their attention on text.";
 
-  var state = { enabled: true, intensity: 0.5, disabledSites: [] };
+  var state = {
+    enabled: true,
+    intensity: 0.5,
+    disabledSites: [],
+    gazeEnabled: false
+  };
   var currentHost = "";
   var currentTabHttp = false;
   var selectedFile = null;
@@ -84,6 +92,24 @@
     el.intensity.value = String(state.intensity);
     el.intensityValue.textContent = Math.round(state.intensity * 100) + "%";
     renderPreview();
+    renderGaze();
+  }
+
+  function renderGaze() {
+    var on = !!state.gazeEnabled;
+    el.gazeToggle.setAttribute("aria-checked", on ? "true" : "false");
+    el.gazeToggle.classList.toggle("is-on", on);
+    el.gazeRecalBtn.hidden = !on;
+
+    if (!currentTabHttp) {
+      el.gazeToggle.disabled = true;
+      el.gazeNote.textContent = "open a normal web page to use this";
+    } else {
+      el.gazeToggle.disabled = false;
+      el.gazeNote.textContent = on
+        ? "on \u2014 grant camera & calibrate on the page"
+        : "off";
+    }
   }
 
   function save(partial) {
@@ -121,6 +147,45 @@
       save({ enabled: true, disabledSites: list });
     }
     renderControls();
+  });
+
+  // Gaze Reading (beta). Start/stop is an explicit, per-tab action sent to the
+  // active tab's content script (so the camera never silently starts elsewhere).
+  function sendToActiveTab(message, cb) {
+    getActiveTab(function (tab) {
+      if (!tab || tab.id == null) {
+        cb && cb(false);
+        return;
+      }
+      try {
+        chrome.tabs.sendMessage(tab.id, message, function (resp) {
+          cb && cb(!chrome.runtime.lastError, resp);
+        });
+      } catch (e) {
+        cb && cb(false);
+      }
+    });
+  }
+
+  el.gazeToggle.addEventListener("click", function () {
+    if (el.gazeToggle.disabled) return;
+    var next = !state.gazeEnabled;
+    state.gazeEnabled = next;
+    save({ gazeEnabled: next }); // remembered for the popup's display
+    renderGaze();
+
+    sendToActiveTab({ type: next ? "gazeStart" : "gazeStop" }, function (ok) {
+      if (!ok) {
+        // The page was loaded before this build, or is a restricted page.
+        el.gazeNote.textContent = "reload this tab, then toggle on";
+      }
+    });
+  });
+
+  el.gazeRecalBtn.addEventListener("click", function () {
+    sendToActiveTab({ type: "gazeRecalibrate" }, function () {
+      window.close();
+    });
   });
 
   // Intensity
@@ -202,12 +267,13 @@
   // ---------------------------------------------------------------------------
   function init() {
     chrome.storage.sync.get(
-      { enabled: true, intensity: 0.5, disabledSites: [] },
+      { enabled: true, intensity: 0.5, disabledSites: [], gazeEnabled: false },
       function (stored) {
         if (stored && !chrome.runtime.lastError) {
           state.enabled = stored.enabled;
           state.intensity = stored.intensity;
           state.disabledSites = stored.disabledSites || [];
+          state.gazeEnabled = !!stored.gazeEnabled;
         }
         getActiveTab(function (tab) {
           var url = tab && tab.url;
@@ -221,6 +287,24 @@
             }
           }
           renderControls();
+
+          // Reflect the *actual* gaze state of this tab (it may differ from the
+          // remembered toggle, e.g. after navigating to a fresh page).
+          if (tab && tab.id != null && currentTabHttp) {
+            try {
+              chrome.tabs.sendMessage(tab.id, { type: "gazeStatus" }, function (
+                resp
+              ) {
+                if (chrome.runtime.lastError) return; // no content script yet
+                if (resp) {
+                  state.gazeEnabled = !!(resp.running || resp.starting);
+                  renderGaze();
+                }
+              });
+            } catch (e) {
+              /* ignore */
+            }
+          }
         });
       }
     );

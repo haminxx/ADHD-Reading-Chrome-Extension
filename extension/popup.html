@@ -47,6 +47,39 @@
         <p class="fr-preview" id="preview"></p>
       </section>
 
+      <!-- Gaze Reading (beta) -->
+      <p class="fr-section-label">Experimental</p>
+      <section class="fr-card">
+        <div class="fr-card-head">
+          <span class="fr-row-label">
+            Gaze Reading <span class="fr-beta">beta</span>
+          </span>
+          <button
+            class="fr-switch"
+            id="gazeToggle"
+            role="switch"
+            aria-checked="false"
+            aria-label="Toggle Gaze Reading"
+          >
+            <span class="fr-switch-knob"></span>
+          </button>
+        </div>
+        <p class="fr-row-help">
+          Uses your <strong>webcam</strong> to estimate where you're looking and
+          sweeps a bold emphasis across each word as you read it. Needs a quick
+          click-calibration and good, even lighting. Precision is
+          word/line-level, not exact characters.
+        </p>
+        <p class="fr-row-help fr-privacy">
+          Runs entirely on your device &mdash; the camera feed never leaves your
+          computer and nothing is uploaded.
+        </p>
+        <button class="fr-secondary fr-recalibrate" id="gazeRecalBtn" hidden>
+          Recalibrate
+        </button>
+        <p class="fr-site-note" id="gazeNote">off</p>
+      </section>
+
       <!-- File import -->
       <p class="fr-section-label">Or open a document</p>
       <section class="fr-card">

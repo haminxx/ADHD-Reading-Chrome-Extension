@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Focus Reader - ADHD Bionic Reading",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Bolds the leading half of every word to create reading anchors that help with focus and attention. Works on web pages and on imported PDF/text files.",
   "permissions": ["storage", "activeTab"],
   "action": {
@@ -28,6 +28,19 @@
       "css": ["src/content.css"],
       "run_at": "document_idle",
       "all_frames": true
+    },
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["vendor/webgazer.js", "src/gaze.js"],
+      "css": ["src/gaze.css"],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["vendor/models/*"],
+      "matches": ["http://*/*", "https://*/*"]
     }
   ],
   "content_security_policy": {

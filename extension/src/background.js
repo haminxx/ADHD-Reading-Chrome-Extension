@@ -5,7 +5,8 @@
 var DEFAULTS = {
   enabled: true,
   intensity: 0.5,
-  disabledSites: []
+  disabledSites: [],
+  gazeEnabled: false
 };
 
 function updateBadge(enabled) {
