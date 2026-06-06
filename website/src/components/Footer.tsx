@@ -1,4 +1,5 @@
 import { NAV_ITEMS } from "@/lib/config";
+import { usePauseZoneHandlers } from "@/context/CursorFollowPause";
 
 function scrollToId(href: string) {
   if (href.startsWith("#")) {
@@ -7,8 +8,11 @@ function scrollToId(href: string) {
 }
 
 export function Footer() {
+  const pauseZone = usePauseZoneHandlers();
+
   return (
     <footer
+      {...pauseZone}
       className="border-t border-foreground/10 py-16"
       style={{
         backgroundColor:

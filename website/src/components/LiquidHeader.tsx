@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   motion,
   AnimatePresence,
@@ -6,6 +6,7 @@ import {
   useSpring,
   type Transition,
 } from "framer-motion";
+import { useCursorFollowPause, usePauseZoneHandlers } from "@/context/CursorFollowPause";
 import { NAV_ITEMS } from "@/lib/config";
 
 // "bar"    = full header (left nav pill + right actions pill) pinned at top
@@ -18,6 +19,7 @@ const SCROLL_THRESHOLD = 90;
 // Bouncy spring used for every dimensional/positional change (no linear easing).
 const SPRING: Transition = { type: "spring", stiffness: 320, damping: 26, mass: 0.9 };
 const FOLLOW_SPRING = { stiffness: 150, damping: 15, mass: 0.6 };
+const SNAP_SPRING = { stiffness: 520, damping: 30, mass: 0.45 };
 
 function scrollToId(href: string) {
   if (href.startsWith("#")) {
@@ -39,14 +41,22 @@ function Logo({ dark = false }: { dark?: boolean }) {
 
 export function LiquidHeader() {
   const [mode, setMode] = useState<Mode>("bar");
+  const { isPaused } = useCursorFollowPause();
+  const pauseZone = usePauseZoneHandlers();
+  const isPausedRef = useRef(isPaused);
+  const wasPausedRef = useRef(false);
+  const lastMouseRef = useRef({ x: 0, y: 40 });
 
   // Cursor position -> spring-smoothed values that drive the island.
   const mouseX = useMotionValue(
     typeof window !== "undefined" ? window.innerWidth / 2 : 0
   );
   const mouseY = useMotionValue(40);
-  const springX = useSpring(mouseX, FOLLOW_SPRING);
-  const springY = useSpring(mouseY, FOLLOW_SPRING);
+  const [followSpring, setFollowSpring] = useState(FOLLOW_SPRING);
+  const springX = useSpring(mouseX, followSpring);
+  const springY = useSpring(mouseY, followSpring);
+
+  isPausedRef.current = isPaused;
 
   useEffect(() => {
     const onScroll = () => {
@@ -61,12 +71,30 @@ export function LiquidHeader() {
 
   useEffect(() => {
     const onMove = (e: MouseEvent) => {
-      mouseX.set(e.clientX);
-      mouseY.set(e.clientY);
+      lastMouseRef.current = { x: e.clientX, y: e.clientY };
+      if (!isPausedRef.current) {
+        mouseX.set(e.clientX);
+        mouseY.set(e.clientY);
+      }
     };
     window.addEventListener("mousemove", onMove);
     return () => window.removeEventListener("mousemove", onMove);
   }, [mouseX, mouseY]);
+
+  // Quick spring snap to cursor when leaving a pause zone (island mode only).
+  useEffect(() => {
+    const wasPaused = wasPausedRef.current;
+    wasPausedRef.current = isPaused;
+
+    if (wasPaused && !isPaused && mode === "island") {
+      const { x, y } = lastMouseRef.current;
+      setFollowSpring(SNAP_SPRING);
+      mouseX.set(x);
+      mouseY.set(y);
+      const timer = window.setTimeout(() => setFollowSpring(FOLLOW_SPRING), 380);
+      return () => window.clearTimeout(timer);
+    }
+  }, [isPaused, mode, mouseX, mouseY]);
 
   const closeCard = () =>
     setMode(window.scrollY > SCROLL_THRESHOLD ? "island" : "bar");
@@ -98,6 +126,7 @@ export function LiquidHeader() {
             exit={{ y: -80, opacity: 0 }}
             transition={SPRING}
             className="fixed right-4 top-4 z-40"
+            {...pauseZone}
           >
             <div className="liquid-surface flex items-center gap-1 rounded-full p-1.5">
               <motion.button
@@ -127,6 +156,7 @@ export function LiquidHeader() {
             exit={{ y: -80, opacity: 0, scale: 0.9 }}
             transition={SPRING}
             className="fixed left-4 top-4 z-40"
+            {...pauseZone}
           >
             <div className="liquid-surface flex items-center gap-1 rounded-full py-1.5 pl-2 pr-3">
               <span className="px-1">
@@ -218,6 +248,7 @@ export function LiquidHeader() {
               layoutId="hud-bg"
               transition={SPRING}
               className="fixed left-4 top-4 z-50 w-[min(92vw,360px)] overflow-hidden rounded-[28px] bg-black p-5 text-white"
+              {...pauseZone}
             >
               <motion.div
                 initial={{ opacity: 0, y: 6 }}
