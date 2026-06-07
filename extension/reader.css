@@ -132,6 +132,12 @@ body {
   color: #fff;
 }
 
+.rd-vision[aria-pressed="true"] {
+  background: rgba(34, 197, 94, 0.16);
+  border-color: #22c55e;
+  color: #bbf7d0;
+}
+
 /* Main */
 .rd-main {
   min-height: calc(100vh - 57px);

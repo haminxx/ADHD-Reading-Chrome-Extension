@@ -32,11 +32,12 @@ Drag the **intensity** slider toward *Light* (≈40%) to bold *less than half*
 
 ## Gaze Reading (beta)
 
-A second, **separate** mode (it does not change or replace the static bolding
-above). When you turn it on, Focus Reader uses your **webcam** to estimate where
-on the page you're looking, finds the word near that point, and animates a
-bionic bold **sweep** across that word's leading characters at a reading pace —
-so the front of the word you're on emphasizes while the rest stays readable.
+A second, **separate** mode powered by the open-source **[WebGazer.js](https://webgazer.cs.brown.edu/)**
+library. When you turn it on, Focus Reader uses your **webcam** to estimate where
+on the page you're looking, then **bionic-bolds words in that reading area** —
+nearby words on the same line bold instantly for context, and the word you're
+directly on gets an animated character **sweep** across its leading letters.
+Static page-wide bolding pauses automatically while gaze mode is active.
 
 It works as an overlay on **any** website.
 
@@ -46,7 +47,7 @@ Browser webcam gaze tracking is **word/line-level**, not exact-character. The
 "character-by-character" effect is a reading-paced **animation** over the word
 you're looking at — not literal per-character eye resolution. To keep it from
 thrashing on jittery gaze we apply **low-pass smoothing** plus a short **dwell
-threshold** (~160 ms) before a word activates.
+threshold** (~90 ms) before the focal word's sweep starts.
 
 It is a **beta**: accuracy depends heavily on lighting, camera quality, and how
 still you sit. Expect it to be approximate.
@@ -66,10 +67,14 @@ still you sit. Expect it to be approximate.
    runs in the page's content script, the camera prompt is for the **website's**
    origin, not the extension. This is an MV3 limitation: content-script
    `getUserMedia` uses the host page's origin. You may be re-prompted per site.)*
+   Some sites send a `Permissions-Policy` header that blocks the camera outright;
+   on those pages **no prompt can appear** and the mode tells you to try a
+   different page. The built-in reader tab and most article/blog pages work.
 3. A **calibration overlay** appears. Look at each red dot and click it a few
    times; dots turn green as they learn your gaze.
 4. After calibration, read normally. A faint dot shows the estimated gaze point,
-   and words emphasize as you look at them.
+   a subtle band highlights your current line, and words in that area bold as
+   you look at them.
 5. Turn it off in the popup (everything is torn down and the camera stops), or
    click **Recalibrate** to retrain.
 
@@ -100,19 +105,22 @@ camera, and flips the toggle back off.
   coordinates — no remapping needed.
 - **Calibration** trains WebGazer's ridge-regression by pairing each dot's screen
   location with your eye features at click time (`recordScreenPosition`).
-- **Gaze → word:** each sample is smoothed (low-pass), then
-  `document.caretRangeFromPoint(x, y)` locates the text node + offset and we
-  expand to word boundaries. A word must be **dwelled on** past the threshold
-  before it activates.
-- **Animation:** the active word is wrapped in a span of per-character `<span>`s;
-  leading characters are emphasized one-by-one via `requestAnimationFrame`, sized
-  by the same `bionicSplit()` used everywhere else. Emphasis uses a **synthetic
-  (text-shadow) bold** so thickening a glyph **doesn't change its width** — no
-  layout reflow or jitter. When your gaze moves on, the previous word is cleared
-  and the DOM is restored.
-- **Performance & cleanup:** gaze processing is throttled (~25 Hz), only runs in
-  the **top frame** (never inside iframes), and pauses when the tab is hidden.
-  Disabling stops the camera and calls `webgazer.end()`.
+- **Gaze → reading zone:** each sample is smoothed (low-pass), then we sample
+  several points around the gaze to find words on the current line. Nearby words
+  get **instant bionic bold**; the focal word (closest to your gaze) must be
+  **dwelled on** briefly before its animated sweep starts.
+- **Animation:** the focal word is wrapped in per-character `<span>`s and its
+  leading characters emphasize one-by-one via `requestAnimationFrame`. Context
+  words use the same `bionicSplit()` but apply bold immediately. Emphasis uses a
+  **synthetic (text-shadow) bold** so thickening a glyph **doesn't change its
+  width** — no layout reflow or jitter. Words fade out shortly after your gaze
+  leaves the area and the DOM is restored.
+- **Performance & cleanup:** the ~1.9MB WebGazer bundle is **never loaded during
+  normal browsing**. It is injected on demand (via the background worker and
+  `chrome.scripting`) only when you turn Gaze Reading on, so ordinary pages pay
+  zero cost for a feature you aren't using. Gaze processing is throttled (~25 Hz),
+  only runs in the **top frame** (never inside iframes), and pauses when the tab
+  is hidden. Disabling stops the camera and calls `webgazer.end()`.
 
 ### Why not the NVIDIA cloud models?
 

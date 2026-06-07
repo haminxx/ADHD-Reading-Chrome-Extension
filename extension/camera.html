@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Focus Reader Gaze Camera</title>
+    <link rel="stylesheet" href="camera.css" />
+  </head>
+  <body>
+    <!-- Calibration overlay (shown only while calibrating). The webcam video
+         WebGazer creates is hidden via camera.css; nothing is uploaded. -->
+    <div id="cam-calib" hidden>
+      <div class="cam-calib-card">
+        <h2>Calibrate Gaze Reading</h2>
+        <p id="cam-calib-help">
+          Look directly at each red dot and click it. Keep your head fairly
+          still and your face well lit.
+        </p>
+        <div class="cam-progress" id="cam-progress"></div>
+        <button class="cam-cancel" id="cam-cancel">Cancel</button>
+      </div>
+    </div>
+
+    <script src="vendor/webgazer.js"></script>
+    <script src="src/camera.js"></script>
+  </body>
+</html>

@@ -21,6 +21,7 @@
     openBtn: document.getElementById("openBtn"),
     chooseBtn: document.getElementById("chooseBtn"),
     fileInput: document.getElementById("fileInput"),
+    visionBtn: document.getElementById("visionBtn"),
     dropzone: document.getElementById("dropzone"),
     empty: document.getElementById("empty"),
     loading: document.getElementById("loading"),
@@ -35,6 +36,14 @@
   // when the intensity slider moves, without re-parsing the file.
   // Each block: { type: "para" | "page", text: string }
   var blocks = [];
+
+  // Vision (gaze) reading: when on, the document is rendered as PLAIN text and
+  // the shared gaze host bolds words where the reader looks. When off, the text
+  // is statically bionic-bolded. Honors the stored gazeEnabled setting on load.
+  var Host = window.FocusReaderGazeHost;
+  var gazeOn = false;
+  var wantGazeOnLoad = false; // from stored gazeEnabled setting
+  var autoVisionDone = false; // ensures we only auto-start vision once
 
   // ---------------------------------------------------------------------------
   // View state
@@ -60,6 +69,11 @@
   // Bionic rendering (DOM-based, no innerHTML -> no injection risk)
   // ---------------------------------------------------------------------------
   function appendBionicText(parent, text) {
+    // In vision mode the gaze engine does the bolding on plain text.
+    if (gazeOn) {
+      parent.appendChild(document.createTextNode(text));
+      return;
+    }
     var tokens = text.match(/[\p{L}\p{N}]+|[^\p{L}\p{N}]+/gu);
     if (!tokens) {
       parent.appendChild(document.createTextNode(text));
@@ -109,6 +123,12 @@
     }
     el.doc.appendChild(frag);
     show("doc");
+
+    // Auto-start vision once if the user has it enabled in settings.
+    if (wantGazeOnLoad && !gazeOn && !autoVisionDone && Host) {
+      autoVisionDone = true;
+      startVision();
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -238,8 +258,51 @@
   el.intensity.addEventListener("input", function () {
     intensity = parseFloat(el.intensity.value);
     el.intensityValue.textContent = Math.round(intensity * 100) + "%";
+    if (Host) Host.setIntensity(intensity);
     if (blocks.length) renderBlocks();
   });
+
+  // ---------------------------------------------------------------------------
+  // Vision (gaze) reading
+  // ---------------------------------------------------------------------------
+  function renderVisionBtn() {
+    if (!el.visionBtn) return;
+    el.visionBtn.setAttribute("aria-pressed", gazeOn ? "true" : "false");
+  }
+
+  function startVision() {
+    if (!Host) return;
+    gazeOn = true;
+    renderVisionBtn();
+    if (blocks.length) renderBlocks(); // re-render as plain text for the engine
+    Host.start({
+      intensity: intensity,
+      onState: function (st) {
+        if (st === "error" || st === "stopped") {
+          if (gazeOn) {
+            gazeOn = false;
+            renderVisionBtn();
+            if (blocks.length) renderBlocks();
+          }
+        }
+      }
+    });
+  }
+
+  function stopVision() {
+    gazeOn = false;
+    renderVisionBtn();
+    if (Host) Host.stop();
+    if (blocks.length) renderBlocks(); // restore static bionic bolding
+  }
+
+  if (el.visionBtn) {
+    el.visionBtn.addEventListener("click", function () {
+      if (!Host) return;
+      if (gazeOn) stopVision();
+      else startVision();
+    });
+  }
 
   function pickFile() {
     el.fileInput.click();
@@ -282,12 +345,14 @@
   // Boot: pick up a file handed over by the popup, if any.
   // ---------------------------------------------------------------------------
   function boot() {
-    chrome.storage.sync.get({ intensity: 0.5 }, function (s) {
+    chrome.storage.sync.get({ intensity: 0.5, gazeEnabled: false }, function (s) {
       if (s && typeof s.intensity === "number") {
         intensity = s.intensity;
         el.intensity.value = String(intensity);
         el.intensityValue.textContent = Math.round(intensity * 100) + "%";
       }
+      wantGazeOnLoad = !!(s && s.gazeEnabled) && !!Host;
+      renderVisionBtn();
       if (!store) {
         show("empty");
         return;
@@ -307,6 +372,10 @@
         });
     });
   }
+
+  window.addEventListener("pagehide", function () {
+    if (Host && gazeOn) Host.stop();
+  });
 
   boot();
 })();

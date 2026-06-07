@@ -49,6 +49,8 @@ chrome.storage.onChanged.addListener(function (changes, area) {
 });
 
 // Lets any extension page (e.g. the popup) ask us to open the reader tab.
+// Gaze/WebGazer no longer needs a background injection: the camera runs inside
+// the extension-origin camera.html iframe (see camera.js).
 chrome.runtime.onMessage.addListener(function (msg, _sender, sendResponse) {
   if (msg && msg.type === "openReader") {
     chrome.tabs.create({ url: chrome.runtime.getURL("reader.html") }, function (tab) {

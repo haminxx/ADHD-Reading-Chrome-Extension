@@ -2,35 +2,34 @@
 (function () {
   "use strict";
 
-  var bionicSplit =
-    (window.FocusReaderBionic || {}).bionicSplit ||
-    function (w) {
-      var n = Math.ceil(w.length / 2);
-      return [w.slice(0, n), w.slice(n)];
-    };
   var store = window.FocusReaderStore;
+
+  // Boldness levels for the segmented toggle (intensity = bold fraction).
+  var LEVELS = [
+    { key: "Light", v: 0.4 },
+    { key: "Medium", v: 0.5 },
+    { key: "Heavy", v: 0.6 }
+  ];
 
   var el = {
     startBtn: document.getElementById("startBtn"),
     primaryLabel: document.getElementById("primaryLabel"),
     primaryIcon: document.getElementById("primaryIcon"),
-    siteNote: document.getElementById("siteNote"),
     statusDot: document.getElementById("statusDot"),
-    intensity: document.getElementById("intensity"),
-    intensityValue: document.getElementById("intensityValue"),
-    preview: document.getElementById("preview"),
+    boldnessSeg: document.getElementById("boldnessSeg"),
+    boldnessIndicator: document.getElementById("boldnessIndicator"),
+    gazeToggle: document.getElementById("gazeToggle"),
+    gazeNote: document.getElementById("gazeNote"),
+    gazeRecalBtn: document.getElementById("gazeRecalBtn"),
     dropzone: document.getElementById("dropzone"),
     dropzoneText: document.getElementById("dropzoneText"),
     fileInput: document.getElementById("fileInput"),
-    openReaderBtn: document.getElementById("openReaderBtn"),
-    openBlankReaderBtn: document.getElementById("openBlankReaderBtn"),
-    gazeToggle: document.getElementById("gazeToggle"),
-    gazeRecalBtn: document.getElementById("gazeRecalBtn"),
-    gazeNote: document.getElementById("gazeNote")
+    openReaderBtn: document.getElementById("openReaderBtn")
   };
 
-  var PREVIEW_TEXT =
-    "Bionic reading helps people focus their attention on text.";
+  var segButtons = el.boldnessSeg
+    ? el.boldnessSeg.querySelectorAll(".fr-seg-btn")
+    : [];
 
   var state = {
     enabled: true,
@@ -43,26 +42,26 @@
   var selectedFile = null;
 
   // ---------------------------------------------------------------------------
-  function escapeHtml(s) {
-    return String(s)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
-  }
-
-  function renderPreview() {
-    var tokens = PREVIEW_TEXT.match(/[\p{L}\p{N}]+|[^\p{L}\p{N}]+/gu) || [];
-    var html = "";
-    for (var i = 0; i < tokens.length; i++) {
-      var tok = tokens[i];
-      if (/[\p{L}\p{N}]/u.test(tok)) {
-        var parts = bionicSplit(tok, state.intensity);
-        html += "<b>" + escapeHtml(parts[0]) + "</b>" + escapeHtml(parts[1]);
-      } else {
-        html += escapeHtml(tok);
+  function levelIndexFor(intensity) {
+    var best = 0, bestDiff = Infinity;
+    for (var i = 0; i < LEVELS.length; i++) {
+      var diff = Math.abs(LEVELS[i].v - intensity);
+      if (diff < bestDiff) {
+        bestDiff = diff;
+        best = i;
       }
     }
-    el.preview.innerHTML = html;
+    return best;
+  }
+
+  function renderBoldness() {
+    var idx = levelIndexFor(state.intensity);
+    if (el.boldnessIndicator) {
+      el.boldnessIndicator.style.transform = "translateX(" + idx * 100 + "%)";
+    }
+    for (var i = 0; i < segButtons.length; i++) {
+      segButtons[i].classList.toggle("is-active", i === idx);
+    }
   }
 
   function isActiveHere() {
@@ -73,43 +72,27 @@
     );
   }
 
-  function renderControls() {
+  function renderStart() {
     var active = isActiveHere();
-
-    el.primaryLabel.textContent = active ? "Stop Reading" : "Start Reading";
+    el.primaryLabel.textContent = active ? "Stop" : "Start";
     el.primaryIcon.innerHTML = active ? "&#10073;&#10073;" : "&#9654;";
     el.startBtn.classList.toggle("is-on", active);
     el.statusDot.classList.toggle("on", active);
-
-    if (!currentHost || !currentTabHttp) {
-      el.startBtn.disabled = true;
-      el.siteNote.textContent = "Open a normal web page to use this here";
-    } else {
-      el.startBtn.disabled = false;
-      el.siteNote.textContent = (active ? "active on " : "paused on ") + currentHost;
-    }
-
-    el.intensity.value = String(state.intensity);
-    el.intensityValue.textContent = Math.round(state.intensity * 100) + "%";
-    renderPreview();
-    renderGaze();
+    el.startBtn.disabled = !currentHost || !currentTabHttp;
   }
 
   function renderGaze() {
     var on = !!state.gazeEnabled;
     el.gazeToggle.setAttribute("aria-checked", on ? "true" : "false");
     el.gazeToggle.classList.toggle("is-on", on);
-    el.gazeRecalBtn.hidden = !on;
+    el.gazeToggle.disabled = !currentTabHttp;
+    el.gazeRecalBtn.hidden = !on || !currentTabHttp;
+  }
 
-    if (!currentTabHttp) {
-      el.gazeToggle.disabled = true;
-      el.gazeNote.textContent = "open a normal web page to use this";
-    } else {
-      el.gazeToggle.disabled = false;
-      el.gazeNote.textContent = on
-        ? "on \u2014 grant camera & calibrate on the page"
-        : "off";
-    }
+  function renderAll() {
+    renderStart();
+    renderBoldness();
+    renderGaze();
   }
 
   function save(partial) {
@@ -132,25 +115,6 @@
     }
   }
 
-  // ---------------------------------------------------------------------------
-  // Start / Stop
-  el.startBtn.addEventListener("click", function () {
-    if (!currentHost) return;
-    var list = state.disabledSites.slice();
-    var idx = list.indexOf(currentHost);
-
-    if (isActiveHere()) {
-      if (idx === -1) list.push(currentHost); // stop on this site
-      save({ disabledSites: list });
-    } else {
-      if (idx !== -1) list.splice(idx, 1); // un-pause this site
-      save({ enabled: true, disabledSites: list });
-    }
-    renderControls();
-  });
-
-  // Gaze Reading (beta). Start/stop is an explicit, per-tab action sent to the
-  // active tab's content script (so the camera never silently starts elsewhere).
   function sendToActiveTab(message, cb) {
     getActiveTab(function (tab) {
       if (!tab || tab.id == null) {
@@ -167,17 +131,74 @@
     });
   }
 
+  function setGazeNote(text) {
+    if (!el.gazeNote) return;
+    if (text) {
+      el.gazeNote.textContent = text;
+      el.gazeNote.hidden = false;
+    } else {
+      el.gazeNote.textContent = "";
+      el.gazeNote.hidden = true;
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Start / Stop (per-site static bionic bolding)
+  el.startBtn.addEventListener("click", function () {
+    if (!currentHost) return;
+    var list = state.disabledSites.slice();
+    var idx = list.indexOf(currentHost);
+
+    if (isActiveHere()) {
+      if (idx === -1) list.push(currentHost); // stop on this site
+      save({ disabledSites: list });
+    } else {
+      if (idx !== -1) list.splice(idx, 1); // un-pause this site
+      save({ enabled: true, disabledSites: list });
+    }
+    renderStart();
+  });
+
+  // Bold intensity segmented toggle
+  for (var s = 0; s < segButtons.length; s++) {
+    (function (btn) {
+      btn.addEventListener("click", function () {
+        var lvl = parseInt(btn.getAttribute("data-level"), 10) || 0;
+        state.intensity = LEVELS[lvl].v;
+        save({ intensity: state.intensity });
+        renderBoldness();
+      });
+    })(segButtons[s]);
+  }
+
+  // Gaze reading toggle (bouncy). Press feedback + ripple, then start/stop on
+  // the active tab (which triggers the camera permission request on the page).
+  function setPressed(on) {
+    el.gazeToggle.classList.toggle("is-pressed", on);
+  }
+  el.gazeToggle.addEventListener("mousedown", function () { setPressed(true); });
+  el.gazeToggle.addEventListener("mouseup", function () { setPressed(false); });
+  el.gazeToggle.addEventListener("mouseleave", function () { setPressed(false); });
+
   el.gazeToggle.addEventListener("click", function () {
     if (el.gazeToggle.disabled) return;
     var next = !state.gazeEnabled;
     state.gazeEnabled = next;
-    save({ gazeEnabled: next }); // remembered for the popup's display
+    save({ gazeEnabled: next });
     renderGaze();
+    setGazeNote("");
+
+    if (next) {
+      // Replay the ripple animation.
+      el.gazeToggle.classList.remove("fr-rippling");
+      // force reflow so the animation can restart
+      void el.gazeToggle.offsetWidth;
+      el.gazeToggle.classList.add("fr-rippling");
+    }
 
     sendToActiveTab({ type: next ? "gazeStart" : "gazeStop" }, function (ok) {
       if (!ok) {
-        // The page was loaded before this build, or is a restricted page.
-        el.gazeNote.textContent = "reload this tab, then toggle on";
+        setGazeNote("Reload this tab, then try again");
       }
     });
   });
@@ -186,16 +207,6 @@
     sendToActiveTab({ type: "gazeRecalibrate" }, function () {
       window.close();
     });
-  });
-
-  // Intensity
-  el.intensity.addEventListener("input", function () {
-    state.intensity = parseFloat(el.intensity.value);
-    el.intensityValue.textContent = Math.round(state.intensity * 100) + "%";
-    renderPreview();
-  });
-  el.intensity.addEventListener("change", function () {
-    save({ intensity: parseFloat(el.intensity.value) });
   });
 
   // ---------------------------------------------------------------------------
@@ -246,7 +257,7 @@
       name: selectedFile.name,
       type: selectedFile.type || "",
       size: selectedFile.size,
-      blob: selectedFile, // Blobs are structured-cloneable into IndexedDB
+      blob: selectedFile,
       intensity: state.intensity,
       savedAt: Date.now()
     };
@@ -261,8 +272,6 @@
         el.dropzoneText.textContent = "Could not read file - try again";
       });
   });
-
-  el.openBlankReaderBtn.addEventListener("click", openReaderTab);
 
   // ---------------------------------------------------------------------------
   function init() {
@@ -286,21 +295,22 @@
               currentHost = "";
             }
           }
-          renderControls();
+          renderAll();
 
-          // Reflect the *actual* gaze state of this tab (it may differ from the
-          // remembered toggle, e.g. after navigating to a fresh page).
+          // Reflect the actual gaze state of this tab.
           if (tab && tab.id != null && currentTabHttp) {
             try {
-              chrome.tabs.sendMessage(tab.id, { type: "gazeStatus" }, function (
-                resp
-              ) {
-                if (chrome.runtime.lastError) return; // no content script yet
-                if (resp) {
-                  state.gazeEnabled = !!(resp.running || resp.starting);
-                  renderGaze();
+              chrome.tabs.sendMessage(
+                tab.id,
+                { type: "gazeStatus" },
+                function (resp) {
+                  if (chrome.runtime.lastError) return;
+                  if (resp) {
+                    state.gazeEnabled = !!(resp.running || resp.starting);
+                    renderGaze();
+                  }
                 }
-              });
+              );
             } catch (e) {
               /* ignore */
             }

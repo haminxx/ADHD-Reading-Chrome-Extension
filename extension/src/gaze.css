@@ -21,110 +21,29 @@
   text-shadow: 0.02em 0 0 currentColor, -0.02em 0 0 currentColor;
 }
 
-/* ------------------------------------------------------------------ */
-/* Calibration overlay                                                 */
-/* ------------------------------------------------------------------ */
-#fr-gaze-calib {
+/* Nearby words in the reading zone get instant bionic bold (no per-char sweep). */
+.adhd-gaze-zone-word {
+  transition: opacity 0.15s ease;
+}
+
+.adhd-gaze-zone-word > .adhd-gaze-zone-bold {
+  text-shadow: 0.02em 0 0 currentColor, -0.02em 0 0 currentColor;
+}
+
+/* Subtle highlight band under the line the user is reading. */
+#fr-gaze-line-band {
   position: fixed;
-  inset: 0;
-  z-index: 2147483646; /* just under the very top so nothing clips it */
-  background: rgba(8, 12, 24, 0.82);
-  backdrop-filter: blur(2px);
-  color: #e2e8f0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
-    Arial, sans-serif;
-  cursor: crosshair;
-}
-
-#fr-gaze-calib .fr-gaze-calib-card {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  max-width: 460px;
-  text-align: center;
-  background: rgba(15, 23, 42, 0.96);
-  border: 1px solid #334155;
-  border-radius: 14px;
-  padding: 22px 24px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  z-index: 2147483644;
   pointer-events: none;
+  border-radius: 6px;
+  background: rgba(59, 130, 246, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.12);
+  transition: left 0.12s ease, top 0.12s ease, width 0.12s ease, height 0.12s ease;
 }
 
-#fr-gaze-calib .fr-gaze-calib-card h2 {
-  margin: 0 0 8px;
-  font-size: 18px;
-}
-
-#fr-gaze-calib .fr-gaze-calib-card p {
-  margin: 6px 0;
-  font-size: 13px;
-  line-height: 1.5;
-  color: #94a3b8;
-}
-
-#fr-gaze-calib .fr-gaze-progress {
-  margin-top: 12px;
-  font-size: 13px;
-  font-weight: 700;
-  color: #e2e8f0;
-}
-
-#fr-gaze-calib .fr-gaze-cancel {
-  margin-top: 14px;
-  pointer-events: auto;
-  border: 1px solid #475569;
-  background: transparent;
-  color: #cbd5e1;
-  border-radius: 9px;
-  padding: 8px 14px;
-  font-size: 13px;
-  cursor: pointer;
-}
-
-#fr-gaze-calib .fr-gaze-cancel:hover {
-  background: rgba(148, 163, 184, 0.15);
-}
-
-/* Calibration dots the user clicks while looking at them. */
-.fr-gaze-dot {
-  position: absolute;
-  width: 26px;
-  height: 26px;
-  margin: -13px 0 0 -13px;
-  border-radius: 50%;
-  background: #ef4444;
-  border: 2px solid #fff;
-  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.25);
-  cursor: pointer;
-  transition: transform 0.1s ease, background 0.2s ease, opacity 0.2s ease;
-}
-
-.fr-gaze-dot:hover {
-  transform: scale(1.15);
-}
-
-.fr-gaze-dot .fr-gaze-dot-count {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  font-weight: 800;
-  color: #fff;
-}
-
-/* Dots warm up from red -> green as the user clicks them. */
-.fr-gaze-dot[data-progress="1"] { background: #f59e0b; }
-.fr-gaze-dot[data-progress="2"] { background: #eab308; }
-.fr-gaze-dot[data-progress="3"] { background: #84cc16; }
-.fr-gaze-dot[data-progress="4"] { background: #22c55e; }
-.fr-gaze-dot.fr-gaze-dot-done {
-  background: #22c55e;
-  opacity: 0.35;
-  box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.2);
-}
+/* Note: the camera + calibration overlay live in the extension-origin iframe
+   (camera.html / camera.css), not here. This stylesheet only covers the
+   reading-time overlays drawn in the host document by gazeEngine.js. */
 
 /* ------------------------------------------------------------------ */
 /* Small status toast (start / camera errors / recalibrate hint)       */
@@ -181,12 +100,13 @@
 #fr-gaze-cursor {
   position: fixed;
   z-index: 2147483645;
-  width: 12px;
-  height: 12px;
-  margin: -6px 0 0 -6px;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
   border-radius: 50%;
-  background: rgba(59, 130, 246, 0.55);
-  border: 1px solid rgba(255, 255, 255, 0.8);
+  background: rgba(59, 130, 246, 0.45);
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
   pointer-events: none;
-  transition: opacity 0.2s ease;
+  transition: left 0.06s linear, top 0.06s linear, opacity 0.2s ease;
 }

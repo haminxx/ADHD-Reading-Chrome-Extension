@@ -1,0 +1,136 @@
+/* Focus Reader - camera.html (gaze iframe) styles.
+   The iframe is a full-viewport, transparent overlay injected over the page.
+   Only the calibration UI is visible; the webcam video WebGazer creates is
+   hidden (the feed never leaves the device). */
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+}
+
+/* Hide all of WebGazer's own video / debug elements. */
+#webgazerVideoContainer,
+#webgazerVideoFeed,
+#webgazerFaceOverlay,
+#webgazerFaceFeedbackBox,
+#webgazerGazeDot,
+video {
+  position: fixed !important;
+  left: -10000px !important;
+  top: -10000px !important;
+  width: 1px !important;
+  height: 1px !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* ------------------------------------------------------------------ */
+/* Calibration overlay                                                 */
+/* ------------------------------------------------------------------ */
+#cam-calib {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 12, 24, 0.82);
+  backdrop-filter: blur(2px);
+  color: #e2e8f0;
+  cursor: crosshair;
+}
+
+#cam-calib[hidden] {
+  display: none;
+}
+
+.cam-calib-card {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  max-width: 460px;
+  text-align: center;
+  background: rgba(15, 23, 42, 0.96);
+  border: 1px solid #334155;
+  border-radius: 14px;
+  padding: 22px 24px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+}
+
+.cam-calib-card h2 {
+  margin: 0 0 8px;
+  font-size: 18px;
+}
+
+.cam-calib-card p {
+  margin: 6px 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #94a3b8;
+}
+
+.cam-progress {
+  margin-top: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #e2e8f0;
+}
+
+.cam-cancel {
+  margin-top: 14px;
+  pointer-events: auto;
+  border: 1px solid #475569;
+  background: transparent;
+  color: #cbd5e1;
+  border-radius: 9px;
+  padding: 8px 14px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.cam-cancel:hover {
+  background: rgba(148, 163, 184, 0.15);
+}
+
+/* Calibration dots the user clicks while looking at them. */
+.cam-dot {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  margin: -13px 0 0 -13px;
+  border-radius: 50%;
+  background: #ef4444;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.25);
+  cursor: pointer;
+  transition: transform 0.1s ease, background 0.2s ease, opacity 0.2s ease;
+}
+
+.cam-dot:hover {
+  transform: scale(1.15);
+}
+
+.cam-dot-count {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.cam-dot[data-progress="1"] { background: #f59e0b; }
+.cam-dot[data-progress="2"] { background: #eab308; }
+.cam-dot[data-progress="3"] { background: #84cc16; }
+.cam-dot.cam-dot-done {
+  background: #22c55e;
+  opacity: 0.35;
+  box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.2);
+}

@@ -32,6 +32,26 @@
   var pendingNodes = [];
   var flushScheduled = false;
 
+  // Time-sliced work queue so transforming a large page never blocks the main
+  // thread long enough to make the tab unresponsive.
+  var workQueue = [];
+  var working = false;
+  var FRAME_BUDGET_MS = 8;
+
+  function now() {
+    return typeof performance !== "undefined" && performance.now
+      ? performance.now()
+      : Date.now();
+  }
+
+  function scheduleChunk(fn) {
+    if (typeof requestIdleCallback === "function") {
+      requestIdleCallback(fn, { timeout: 300 });
+    } else {
+      setTimeout(fn, 0);
+    }
+  }
+
   var host = location.hostname || "";
 
   // ---------------------------------------------------------------------------
@@ -42,8 +62,10 @@
     return settings.disabledSites.indexOf(host) !== -1;
   }
 
+  var gazePaused = false; // static bionic pauses while gaze reading is active
+
   function shouldBeActive() {
-    return !!settings.enabled && !isSiteDisabled();
+    return !!settings.enabled && !isSiteDisabled() && !gazePaused;
   }
 
   function loadSettings(cb) {
@@ -173,15 +195,44 @@
     return nodes;
   }
 
-  // Process a list of nodes without letting our own mutations re-trigger the
-  // observer.
+  // Queue a list of nodes for time-sliced transformation. We pause the observer
+  // while draining so our own DOM writes don't feed back into it.
   function processNodes(nodes) {
-    if (!nodes.length) return;
+    if (!nodes || !nodes.length) return;
+    for (var i = 0; i < nodes.length; i++) workQueue.push(nodes[i]);
+    runQueue();
+  }
+
+  function runQueue() {
+    if (working || !workQueue.length) return;
+    working = true;
     stopObserving();
-    for (var i = 0; i < nodes.length; i++) {
-      transformTextNode(nodes[i]);
+
+    function chunk(deadline) {
+      if (!active) {
+        workQueue.length = 0;
+        working = false;
+        return;
+      }
+      var start = now();
+      var hasTime = function () {
+        if (deadline && typeof deadline.timeRemaining === "function") {
+          return deadline.timeRemaining() > 2;
+        }
+        return now() - start < FRAME_BUDGET_MS;
+      };
+      while (workQueue.length && hasTime()) {
+        transformTextNode(workQueue.shift());
+      }
+      if (workQueue.length) {
+        scheduleChunk(chunk);
+      } else {
+        working = false;
+        startObserving();
+      }
     }
-    startObserving();
+
+    scheduleChunk(chunk);
   }
 
   function transformRoot(root) {
@@ -216,7 +267,8 @@
       pendingNodes = [];
       var nodes = [];
       for (var i = 0; i < batch.length; i++) {
-        nodes = nodes.concat(collectTextNodes(batch[i]));
+        var found = collectTextNodes(batch[i]);
+        for (var j = 0; j < found.length; j++) nodes.push(found[j]);
       }
       processNodes(nodes);
     };
@@ -270,6 +322,8 @@
     active = false;
     stopObserving();
     pendingNodes = [];
+    workQueue.length = 0;
+    working = false;
     revertAll();
   }
 
@@ -277,6 +331,8 @@
     // Used when intensity changes: revert then rebuild with new settings.
     if (!active) return;
     stopObserving();
+    workQueue.length = 0;
+    working = false;
     revertAll();
     active = true; // revertAll set nothing, keep active true
     transformRoot(document.body);
@@ -294,6 +350,18 @@
       deactivate();
     }
   }
+
+  // Pause static bionic bolding while gaze reading owns the page's text styling.
+  window.addEventListener("fr-gaze-change", function (ev) {
+    var on = !!(ev && ev.detail && ev.detail.running);
+    if (on === gazePaused) return;
+    gazePaused = on;
+    if (gazePaused) {
+      deactivate();
+    } else {
+      applyState();
+    }
+  });
 
   // ---------------------------------------------------------------------------
   // React to settings changes from the popup

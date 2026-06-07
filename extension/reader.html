@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Focus Reader</title>
     <link rel="stylesheet" href="reader.css" />
+    <link rel="stylesheet" href="src/gaze.css" />
   </head>
   <body>
     <header class="rd-toolbar">
@@ -29,6 +30,9 @@
           />
           <span id="intensityValue">50%</span>
         </label>
+        <button class="rd-btn rd-vision" id="visionBtn" aria-pressed="false">
+          &#128065; Vision
+        </button>
         <button class="rd-btn" id="openBtn">Open file</button>
         <input
           type="file"
@@ -70,6 +74,8 @@
 
     <script src="src/bionic.js"></script>
     <script src="src/filestore.js"></script>
+    <script src="src/gazeEngine.js"></script>
+    <script src="src/gazeHost.js"></script>
     <script src="vendor/pdf.js"></script>
     <script src="reader.js"></script>
   </body>

@@ -10,108 +10,61 @@
     <div class="fr-popover" id="popover">
       <header class="fr-header">
         <div class="fr-logo">FR</div>
-        <div class="fr-head-text">
-          <h1 class="fr-title">Focus Reader</h1>
-          <p class="fr-subtitle">Bionic reading for ADHD focus</p>
-        </div>
+        <h1 class="fr-title">Focus Reader</h1>
         <span class="fr-status-dot" id="statusDot" title="status"></span>
       </header>
 
-      <!-- Primary action -->
-      <p class="fr-section-label">Format this page</p>
+      <!-- Start -->
       <button class="fr-primary" id="startBtn">
         <span class="fr-primary-icon" id="primaryIcon">&#9654;</span>
-        <span id="primaryLabel">Start Reading</span>
+        <span id="primaryLabel">Start</span>
       </button>
-      <p class="fr-site-note" id="siteNote">on this page</p>
 
-      <!-- Intensity -->
-      <section class="fr-card">
-        <div class="fr-card-head">
-          <span class="fr-row-label">Bold intensity</span>
-          <span class="fr-badge" id="intensityValue">50%</span>
+      <!-- Bold intensity (segmented toggle) -->
+      <div class="fr-row">
+        <span class="fr-row-name">Bold intensity</span>
+        <div class="fr-seg" id="boldnessSeg" role="group" aria-label="Bold intensity">
+          <span class="fr-seg-indicator" id="boldnessIndicator"></span>
+          <button class="fr-seg-btn" data-level="0">Light</button>
+          <button class="fr-seg-btn" data-level="1">Medium</button>
+          <button class="fr-seg-btn" data-level="2">Heavy</button>
         </div>
+      </div>
+
+      <!-- Gaze reading (enable toggle) -->
+      <div class="fr-row">
+        <span class="fr-row-name">Gaze reading</span>
+        <button
+          class="fr-toggle"
+          id="gazeToggle"
+          role="switch"
+          aria-checked="false"
+          aria-label="Enable gaze reading"
+        >
+          <span class="fr-toggle-glow"></span>
+          <span class="fr-toggle-thumb">
+            <span class="fr-toggle-ripple"></span>
+            <span class="fr-toggle-dot"></span>
+          </span>
+        </button>
+      </div>
+      <p class="fr-gaze-note" id="gazeNote" hidden></p>
+      <button class="fr-link" id="gazeRecalBtn" hidden>Recalibrate</button>
+
+      <!-- Open a document -->
+      <label class="fr-dropzone" id="dropzone" for="fileInput">
+        <span class="fr-dropzone-icon">&#128462;</span>
+        <span class="fr-dropzone-text" id="dropzoneText">Drop a file</span>
         <input
-          type="range"
-          id="intensity"
-          min="0.3"
-          max="0.7"
-          step="0.05"
-          value="0.5"
-          class="fr-range"
+          type="file"
+          id="fileInput"
+          accept=".pdf,.txt,.md,.markdown,.text,application/pdf,text/plain"
+          hidden
         />
-        <div class="fr-range-labels">
-          <span>Light</span>
-          <span>Heavy</span>
-        </div>
-        <p class="fr-preview" id="preview"></p>
-      </section>
-
-      <!-- Gaze Reading (beta) -->
-      <p class="fr-section-label">Experimental</p>
-      <section class="fr-card">
-        <div class="fr-card-head">
-          <span class="fr-row-label">
-            Gaze Reading <span class="fr-beta">beta</span>
-          </span>
-          <button
-            class="fr-switch"
-            id="gazeToggle"
-            role="switch"
-            aria-checked="false"
-            aria-label="Toggle Gaze Reading"
-          >
-            <span class="fr-switch-knob"></span>
-          </button>
-        </div>
-        <p class="fr-row-help">
-          Uses your <strong>webcam</strong> to estimate where you're looking and
-          sweeps a bold emphasis across each word as you read it. Needs a quick
-          click-calibration and good, even lighting. Precision is
-          word/line-level, not exact characters.
-        </p>
-        <p class="fr-row-help fr-privacy">
-          Runs entirely on your device &mdash; the camera feed never leaves your
-          computer and nothing is uploaded.
-        </p>
-        <button class="fr-secondary fr-recalibrate" id="gazeRecalBtn" hidden>
-          Recalibrate
-        </button>
-        <p class="fr-site-note" id="gazeNote">off</p>
-      </section>
-
-      <!-- File import -->
-      <p class="fr-section-label">Or open a document</p>
-      <section class="fr-card">
-        <p class="fr-row-help">
-          Drop a PDF or text file to open it in a new focus-formatted reader tab.
-        </p>
-
-        <label class="fr-dropzone" id="dropzone" for="fileInput">
-          <span class="fr-dropzone-icon">&#128462;</span>
-          <span class="fr-dropzone-text" id="dropzoneText">
-            Click to choose a file
-          </span>
-          <span class="fr-dropzone-sub">PDF, TXT, MD &middot; or drag &amp; drop</span>
-          <input
-            type="file"
-            id="fileInput"
-            accept=".pdf,.txt,.md,.markdown,.text,application/pdf,text/plain"
-            hidden
-          />
-        </label>
-
-        <button class="fr-secondary" id="openReaderBtn" disabled>
-          Open in Reader
-        </button>
-        <button class="fr-link" id="openBlankReaderBtn">
-          Open empty reader &rarr;
-        </button>
-      </section>
-
-      <footer class="fr-footer">
-        Reload a tab if on-page changes don't appear right away.
-      </footer>
+      </label>
+      <button class="fr-secondary" id="openReaderBtn" disabled>
+        Open in Reader
+      </button>
     </div>
 
     <script src="src/bionic.js"></script>
